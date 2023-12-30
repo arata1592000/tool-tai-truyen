@@ -17,11 +17,7 @@
   <script>
     const url = document.getElementById('urlInput').value;
     async function fetchContent() {
-  try {
     const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error('Network response was not ok.');
-    }
 
     const html = await response.text();
     const parser = new DOMParser();
@@ -40,9 +36,6 @@
 
   
     console.log(content); // Display the filtered content in the console
-  } catch (error) {
-    console.error('An error occurred:', error);
-  }
   
 }
 
