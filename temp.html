@@ -31,12 +31,12 @@
     const chapterTitleContent = chapterTitleElement.querySelector('.chapter-text').innerText.trim();
     const content = chapterTitleContent + "\n" + doc.getElementById('chapter-c').innerText; 
     const htmlContent = `<p>${content}</p>`; 
-  const converted = htmlDocx.asBlob(htmlContent); 
-  const downloadLink = document.createElement('a');
-  downloadLink.href = URL.createObjectURL(converted);
-  downloadLink.download = 'document.docx'; 
+    const converted = htmlDocx.asBlob(htmlContent); 
+    const downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(converted);
+    downloadLink.download = 'document.docx'; 
 
-  downloadLink.click(); 
+    downloadLink.click(); 
 
   
     console.log(content); // Display the filtered content in the console
