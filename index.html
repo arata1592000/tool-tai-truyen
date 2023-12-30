@@ -9,38 +9,63 @@
   
   <!-- Input để nhập URL -->
   <label for="urlInput">URL:</label>
-  <input type="text" id="urlInput"><br><br>
+  <input type="text" id="urlInput" size="60" placeholder="https://truyenchu.vn/hop-dao/chuong-246-ngu-hanh-chan-luc-thay-doi"><br><br>
+
+  <label for="chapterInput">Từ chương:</label>
+  <input type="number" id="txtChapterStart" min="1" ><br><br>
+
+  <label for="chapterInput">Đến chương:</label>
+  <input type="number" id="txtChapterEnd" max="9999"><br><br>
 
   <!-- Button để thực hiện hành động -->
-  <button onclick="fetchContent()">OK</button>
+  <button onclick="download()">OK</button>
 
   <script>
-    const url = document.getElementById('urlInput').value;
-    async function fetchContent() {
-    const response = await fetch(url);
-
-    const html = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
+    async function download(){
+        const chapterStart= document.getElementById('txtChapterStart').value;
+        const chapterEnd= document.getElementById('txtChapterEnd').value;
+        let linkChapter = '';
+        for (let i = chapterStart ; i <= chapterEnd ; i++){
+            linkChapter = await fetchContent(linkChapter, i);
+        }
+    }
     
-    const chapterTitleElement = doc.querySelector('.chapter-title');
-    const chapterTitleContent = chapterTitleElement.querySelector('.chapter-text').innerText.trim();
-    const content = chapterTitleContent + "\n" + doc.getElementById('chapter-c').innerText; 
-    const htmlContent = `<p>${content}</p>`; 
-    const converted = htmlDocx.asBlob(htmlContent); 
-    const downloadLink = document.createElement('a');
-    downloadLink.href = URL.createObjectURL(converted);
-    downloadLink.download = 'document.docx'; 
+    async function fetchContent(linkChapter, countChapter) {
+        let url = '';
+        if (linkChapter === ''){
+            url = document.getElementById('urlInput').value; // Retrieve URL value here
+        } else {
+            url = linkChapter;
+        }
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Network response was not ok.');
+            }
 
-    downloadLink.click(); 
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            const chapterTitleElement = doc.querySelector('.chapter-title');
+            const chapterTitleContent = chapterTitleElement.querySelector('.chapter-text').innerText.trim();
+            const content = chapterTitleContent + "\n" + doc.getElementById('chapter-c').innerHTML; 
+            const anchorElement = doc.getElementById('next_chap');
+            const link = anchorElement.getAttribute('href');
+            const linkNext = 'https://truyenchu.vn/' +  link;
+            console.log(linkNext);
+            const htmlContent = `<p>${content}</p>`; 
+            const converted = htmlDocx.asBlob(htmlContent); 
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(converted);
+            downloadLink.download = 'Chương ' + countChapter + '.docx'; 
 
-  
-    console.log(content); // Display the filtered content in the console
-  
-}
-
-
-
+            downloadLink.click(); 
+            return linkNext;
+        } catch (error) {
+            console.error('An error occurred:', error);
+        }
+    }
   </script>
   
 </body>
