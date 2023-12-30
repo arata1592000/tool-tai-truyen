@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lấy nội dung từ URL</title>
+  <script src="https://cdn.jsdelivr.net/npm/html-docx-js/dist/html-docx.js"></script>
+</head>
+<body>
+  <h1>Nhập URL để lấy nội dung</h1>
+  
+  <!-- Input để nhập URL -->
+  <label for="urlInput">URL:</label>
+  <input type="text" id="urlInput"><br><br>
+
+  <!-- Button để thực hiện hành động -->
+  <button onclick="fetchContent()">OK</button>
+
+  <script>
+    const url = document.getElementById('urlInput').value;
+    async function fetchContent() {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('Network response was not ok.');
+    }
+
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    const chapterTitleElement = doc.querySelector('.chapter-title');
+    const chapterTitleContent = chapterTitleElement.querySelector('.chapter-text').innerText.trim();
+    const content = chapterTitleContent + "\n" + doc.getElementById('chapter-c').innerText; 
+    const htmlContent = `<p>${content}</p>`; 
+  const converted = htmlDocx.asBlob(htmlContent); 
+  const downloadLink = document.createElement('a');
+  downloadLink.href = URL.createObjectURL(converted);
+  downloadLink.download = 'document.docx'; 
+
+  downloadLink.click(); 
+
+  
+    console.log(content); // Display the filtered content in the console
+  } catch (error) {
+    console.error('An error occurred:', error);
+  }
+  
+}
+
+
+
+  </script>
+  
+</body>
+</html>
