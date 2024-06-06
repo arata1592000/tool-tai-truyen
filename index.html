@@ -12,7 +12,7 @@
   <input type="text" id="urlInput" size="60" placeholder="https://truyenchu.vn/hop-dao/chuong-246-ngu-hanh-chan-luc-thay-doi"><br><br>
 
   <label for="chapterInput">Từ chương:</label>
-  <input type="number" id="txtChapterStart" min="1" ><br><br>
+  <input type="number" id="txtChapterStart" min="1"><br><br>
 
   <label for="chapterInput">Đến chương:</label>
   <input type="number" id="txtChapterEnd" max="9999"><br><br>
@@ -21,52 +21,60 @@
   <button onclick="download()">OK</button>
 
   <script>
-    async function download(){
-        const chapterStart= document.getElementById('txtChapterStart').value;
-        const chapterEnd= document.getElementById('txtChapterEnd').value;
-        let linkChapter = '';
-        for (let i = chapterStart ; i <= chapterEnd ; i++){
-            linkChapter = await fetchContent(linkChapter, i);
-        }
+    async function download() {
+      const chapterStart = parseInt(document.getElementById('txtChapterStart').value);
+      const chapterEnd = parseInt(document.getElementById('txtChapterEnd').value);
+      let currentUrl = document.getElementById('urlInput').value; // URL đầu tiên
+      
+      for (let i = chapterStart; i <= chapterEnd; i++) {
+        currentUrl = await fetchContent(currentUrl, i);
+        if (!currentUrl) break; // Dừng nếu không tìm thấy URL tiếp theo
+      }
     }
-    
-    async function fetchContent(linkChapter, countChapter) {
-        let url = '';
-        if (linkChapter === ''){
-            url = document.getElementById('urlInput').value; // Retrieve URL value here
+
+    async function fetchContent(url, chapterNumber) {
+      try {
+        // Sử dụng proxy để vượt qua CORS
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        const response = await fetch(proxyUrl + url);
+
+        if (!response.ok) {
+          throw new Error('Lỗi mạng.');
+        }
+
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Trích xuất nội dung chương
+        const chapterTitleElement = doc.querySelector('.chapter-title');
+        const chapterTitleContent = chapterTitleElement ? chapterTitleElement.innerText.trim() : 'Không có tiêu đề';
+        const contentElement = doc.getElementById('chapter-c');
+        const content = contentElement ? contentElement.innerHTML : 'Không có nội dung';
+
+        // Tạo nội dung cho file docx
+        const htmlContent = `<h1>${chapterTitleContent}</h1>${content}`;
+        const converted = htmlDocx.asBlob(htmlContent);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(converted);
+        downloadLink.download = `Chuong_${chapterNumber}.docx`;
+
+        downloadLink.click();
+
+        // Lấy URL chương tiếp theo
+        const nextChapterLinkElement = doc.getElementById('next_chap');
+        if (nextChapterLinkElement) {
+          const nextUrl = new URL(nextChapterLinkElement.getAttribute('href'), url);
+          return nextUrl.href;
         } else {
-            url = linkChapter;
+          console.warn('Không tìm thấy chương tiếp theo.');
+          return null;
         }
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error('Network response was not ok.');
-            }
-
-            const html = await response.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            
-            const chapterTitleElement = doc.querySelector('.chapter-title');
-            const chapterTitleContent = chapterTitleElement.querySelector('.chapter-text').innerText.trim();
-            const content = chapterTitleContent + "\n" + doc.getElementById('chapter-c').innerHTML; 
-            const anchorElement = doc.getElementById('next_chap');
-            const link = anchorElement.getAttribute('href');
-            const linkNext = 'https://truyenchu.vn/' +  link;
-            console.log(linkNext);
-            const htmlContent = `<p>${content}</p>`; 
-            const converted = htmlDocx.asBlob(htmlContent); 
-            const downloadLink = document.createElement('a');
-            downloadLink.href = URL.createObjectURL(converted);
-            downloadLink.download = 'Chương ' + countChapter + '.docx'; 
-
-            downloadLink.click(); 
-            return linkNext;
-        } catch (error) {
-            console.error('An error occurred:', error);
-        }
+      } catch (error) {
+        console.error('Đã xảy ra lỗi:', error);
+        return null;
+      }
     }
   </script>
-  
 </body>
 </html>
